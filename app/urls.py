@@ -1,5 +1,5 @@
 from itertools import product
-import json
+
 
 def map_urls(base_url):
     """
@@ -32,12 +32,17 @@ def map_urls(base_url):
             # Gerar URLs para cada subopção
             for subopt_num in range(1, num_suboptions + 1):
                 # Gerar todas as combinações possíveis de parâmetros
-                param_combinations = product(all_years,
-                                             [subopt_num])
+                param_combinations = product(all_years, [subopt_num])
                 # Para cada combinação nas combinações de parâmetros
                 for combination in param_combinations:
                     url = generate_url(base_url, option, params, combination)
-                    key_str = str(option) + "_subopt_0" + str(combination[1]) + "_" + str(combination[0])
+                    key_str = (
+                        str(option)
+                        + "_subopt_0"
+                        + str(combination[1])
+                        + "_"
+                        + str(combination[0])
+                    )
                     url_dict[key_str] = url
         else:
             # Se não houver subopções, gerar URLs apenas com os anos
@@ -48,16 +53,18 @@ def map_urls(base_url):
                 url_dict[key_str] = url
     return url_dict
 
-def get_num_suboptions(option:str):
-  """Retorna o número de subpções para cada opção de página do site"""
-  if option == "opt_03":
-    return 4
-  elif option == "opt_05":
-    return 5
-  elif option == "opt_06":
-    return 4
-  else:
-    return 0
+
+def get_num_suboptions(option: str):
+    """Retorna o número de subpções para cada opção de página do site"""
+    if option == "opt_03":
+        return 4
+    elif option == "opt_05":
+        return 5
+    elif option == "opt_06":
+        return 4
+    else:
+        return 0
+
 
 def generate_url(base_url, option, params, combination):
     """
@@ -70,19 +77,22 @@ def generate_url(base_url, option, params, combination):
     :return: url: a URL gerada
     """
     # Construir a URL com os valores daquela combinação
-    url_params = "&".join([f"{param}={value}" for param, value in zip(params, combination)])
+    url_params = "&".join(
+        [f"{param}={value}" for param, value in zip(params, combination)]
+    )
     url = f"{base_url}?{url_params}&opcao={option}"
     return url
 
+
 def get_url_for_option(url_dict, option, year, suboption=None):
     """
-    Retorna a URL correspondente para uma determinada opção, ano e subopção (opcional).
+    Retorna a URL correspondente para uma determinada opção, ano e subopção.
 
     :param url_dict: Dicionário contendo as URLs mapeadas por opção.
     :param option: Opção desejada.
     :param year: Ano desejado.
     :param suboption: Subopção desejada (opcional).
-    :return: A URL correspondente à combinação de opção, ano e subopção (se fornecida).
+    :return: A URL correspondente à combinação.
     """
     # Construir a chave para procurar no dicionário
     if suboption is not None:
@@ -95,5 +105,6 @@ def get_url_for_option(url_dict, option, year, suboption=None):
         # Retorna a URL correspondente
         return url_dict[key]
 
-    # Se a combinação de opção, ano ou subopção (se fornecida) não existir, retornar None
+    # Se a combinação de opção, ano ou subopção (se fornecida) não existir,
+    # retornar None
     return None

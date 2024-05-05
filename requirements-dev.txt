@@ -1,0 +1,8 @@
+-r requirements.txt
+jupyterlab~=4.1
+ipykernel~=6.29
+black~=24.4
+flake8~=7.0
+isort~=5.13
+pytest~=8.2
+flask-testing~=0.8
