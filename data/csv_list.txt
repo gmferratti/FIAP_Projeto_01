@@ -1,0 +1,24 @@
+-- arquivo sobre producao de vinho
+http://vitibrasil.cnpuv.embrapa.br/download/Producao.csv
+
+-- arquivo sobre processamento de vinho
+http://vitibrasil.cnpuv.embrapa.br/download/ProcessaViniferas.csv
+http://vitibrasil.cnpuv.embrapa.br/download/ProcessaAmericanas.csv
+http://vitibrasil.cnpuv.embrapa.br/download/ProcessaMesa.csv
+http://vitibrasil.cnpuv.embrapa.br/download/ProcessaSemclass.csv
+
+-- arquivo sobre comercialização de vinho
+http://vitibrasil.cnpuv.embrapa.br/download/Comercio.csv
+
+-- arquivo com dados sobre importação
+http://vitibrasil.cnpuv.embrapa.br/download/ImpVinhos.csv
+http://vitibrasil.cnpuv.embrapa.br/download/ImpEspumantes.csv
+http://vitibrasil.cnpuv.embrapa.br/download/ImpFrescas.csv
+http://vitibrasil.cnpuv.embrapa.br/download/ImpPassas.csv
+http://vitibrasil.cnpuv.embrapa.br/download/ImpSuco.csv
+
+-- arquivo com dados sobre exportação
+http://vitibrasil.cnpuv.embrapa.br/download/ExpVinho.csv
+http://vitibrasil.cnpuv.embrapa.br/download/ExpEspumantes.csv
+http://vitibrasil.cnpuv.embrapa.br/download/ExpUva.csv
+http://vitibrasil.cnpuv.embrapa.br/download/ExpSuco.csv
