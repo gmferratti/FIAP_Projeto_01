@@ -13,6 +13,12 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+# Configurando o logger
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+logging.INFO("Testando o logger.")
+
 app = Flask(__name__)
 #TO_DO: switch para leitura local ou via scraper
 #TO_DO: logger informando a alteração
