@@ -1,6 +1,8 @@
 -r requirements.txt
 jupyterlab~=4.1
 ipykernel~=6.29
+matplotlib~=3.5
+seaborn~=0.11
 black~=24.4
 flake8~=7.0
 isort~=5.13
