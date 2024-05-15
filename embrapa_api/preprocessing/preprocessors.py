@@ -5,10 +5,9 @@ from unidecode import unidecode
 from typing import Dict
 import logging
 from embrapa_api.preprocessing.constants import (
-    TIPO_PRODUTO_MAP,
-    EXPECTED_AGG_PRODUCTS,
     PRODUCAO_FILE_PATH,
     PROCESSAMENTO_PATHS,
+    COMERCIALIZACAO_FILE_PATH,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,6 +36,12 @@ class ProducaoPreprocessor:
 
     def preprocess(self):
         """Preprocess the data."""
+        TIPO_PRODUTO_MAP = {
+            "vm": "Vinho de Mesa",
+            "vv": "Vinho Fino de Mesa",
+            "su": "Suco",
+            "de": "Derivados",
+        }
         rf_producao = (
             self.rw_producao.melt(
                 id_vars=["id", "produto", "control"],
@@ -70,11 +75,6 @@ class ProducaoPreprocessor:
             rf_producao["NM_CONTROLE"].str.split("_").str[0].map(TIPO_PRODUTO_MAP)
         )
 
-        assert (
-            set(rf_producao.query("TIPO_PRODUTO.isnull()")["NM_CONTROLE"].unique())
-            == EXPECTED_AGG_PRODUCTS
-        )
-
         rf_producao = rf_producao.query("TIPO_PRODUTO.notnull()").drop(
             columns=["NM_CONTROLE"]
         )
@@ -104,8 +104,6 @@ class ProcessamentoPreprocessor:
         self, data: pd.DataFrame, tipo_uva: str, cd_tipo_uva_map: Dict
     ):
         """Trata os dados de uvas processadas para um tipo de uva específico."""
-        rf_tipo_uva = tipo_uva.lower().replace(" ", "_")
-
         rf_data = data.melt(
             id_vars=["id", "control", "cultivar"],
             var_name="ano",
@@ -129,7 +127,7 @@ class ProcessamentoPreprocessor:
             lambda x: float(x) if isinstance(x, (int, float)) else None
         )
 
-        rf_data = rf_data.assign(CD_TIPO_UVA=rf_tipo_uva).astype(
+        rf_data = rf_data.assign(CD_TIPO_UVA=tipo_uva.lower().replace(" ", "_")).astype(
             {
                 "ID_UVA_PROCESSADA": str,
                 "NM_UVA": str,
@@ -208,3 +206,76 @@ class ProcessamentoPreprocessor:
         ).sort_values(by=["ID_UVA_PROCESSADA", "DT_ANO"])
 
         return processamento
+
+
+class ComercializacaoPreprocessor:
+    """Preprocessor class for the Comercializacao endpoint."""
+
+    def __init__(self):
+        self.comercializacao = self.load_data()
+
+    def load_data(self):
+        """Load the data."""
+        try:
+            logger.info("Loading data from URL.")
+            comercializacao = pd.read_csv(
+                'http://vitibrasil.cnpuv.embrapa.br/download/Comercio.csv', sep=';'
+            )
+
+        except Exception as e:
+            logger.warning("Failed to load data from URL. Loading from local file.")
+            logger.warning(e)
+            comercializacao = pd.read_csv(COMERCIALIZACAO_FILE_PATH, sep=';')
+
+        return comercializacao
+
+    def preprocess(self):
+        """Preprocess the data."""
+        TIPO_PRODUTO_MAP = {
+            "vm": "Vinho de Mesa",
+            "ve": "Vinho Especial",
+            "es": "Espumante",
+            "su": "Suco de Uva",
+            "ou": "Outros Vinhos",
+        }
+        rf_comercializacao = (
+            self.comercializacao.melt(
+                id_vars=["id", "Produto", "control"],
+                var_name="ano",
+                value_name="comercializacao_L",
+            )
+            .rename(
+                columns={
+                    "id": "ID_PRODUTO",
+                    "Produto": "NM_PRODUTO",
+                    "control": "NM_CONTROLE",
+                    "ano": "DT_ANO",
+                    "comercializacao_L": "VR_COMERCIALIZACAO_L",
+                }
+            )
+            .astype(
+                {
+                    "ID_PRODUTO": int,
+                    "NM_PRODUTO": str,
+                    "NM_CONTROLE": str,
+                    "DT_ANO": str,
+                    "VR_COMERCIALIZACAO_L": float,
+                }
+            )
+            .sort_values(by=["ID_PRODUTO", "DT_ANO"])
+        )
+
+        rf_comercializacao["NM_PRODUTO"] = (
+            rf_comercializacao["NM_PRODUTO"].apply(unidecode).str.title()
+        )
+        rf_comercializacao["TIPO_PRODUTO"] = (
+            rf_comercializacao["NM_CONTROLE"]
+            .str.split("_")
+            .str[0]
+            .map(TIPO_PRODUTO_MAP)
+        )
+
+        rf_comercializacao = rf_comercializacao.query("TIPO_PRODUTO.notnull()").drop(
+            columns=["NM_CONTROLE"]
+        )
+        return rf_comercializacao
