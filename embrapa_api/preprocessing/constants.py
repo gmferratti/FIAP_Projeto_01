@@ -2,6 +2,8 @@
 
 from embrapa_api.config import CSV_FILES_FOLDER
 
+FILES_DOWNLOAD_DATE = "2024-05-13"
+
 # producao
 PRODUCAO_FILE_PATH = f'{CSV_FILES_FOLDER}/producao_vinho/Producao.csv'
 

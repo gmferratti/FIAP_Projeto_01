@@ -9,31 +9,56 @@ from embrapa_api.preprocessing.constants import (
     PROCESSAMENTO_PATHS,
     COMERCIALIZACAO_FILE_PATH,
     IMPORTACAO_PATHS,
+    FILES_DOWNLOAD_DATE
 )
 
 logger = logging.getLogger(__name__)
 
 
-class ProducaoPreprocessor:
-    """Preprocessor class for the Producao endpoint."""
+class BasePreprocessor:
+    """Base class for all preprocessors."""
 
     def __init__(self):
+        pass
+
+    def load_data(self, url, path, sep):
+        """Generalized data loading."""
+        return self._load_data(url, path, sep)
+
+    def _load_data(self, url: str, path: str, sep: str):
+        """Load the data from either a URL or a fallback local file."""
+        try:
+            logger.info("Loading data from URL.")
+            data = pd.read_csv(url, sep=sep)
+        except Exception as e:
+            logger.warning(
+                f"""Failed to load data from URL,
+                Loading from local file. \n
+                Download date: {FILES_DOWNLOAD_DATE}.\n
+                Error: {e}""")
+            data = pd.read_csv(path, sep=sep)
+        return data
+
+    def preprocess(self):
+        """Template method to preprocess data, must be overridden by subclasses."""
+        raise NotImplementedError("Subclasses must override this method.")
+
+
+class ProducaoPreprocessor(BasePreprocessor):
+    """Preprocessor class for the Producao endpoint."""
+
+    URL = 'http://vitibrasil.cnpuv.embrapa.br/download/Producao.csv'
+    PATH = PRODUCAO_FILE_PATH
+    SEP = ';'
+
+    def __init__(self):
+        super().__init__()
         self.rw_producao = self.load_data()
 
     def load_data(self):
-        """Load the data."""
-        try:
-            logger.info("Loading data from URL.")
-            rw_producao = pd.read_csv(
-                'http://vitibrasil.cnpuv.embrapa.br/download/Producao.csv', sep=';'
-            )
-
-        except Exception as e:
-            logger.warning("Failed to load data from URL. Loading from local file.")
-            logger.warning(e)
-            rw_producao = pd.read_csv(PRODUCAO_FILE_PATH, sep=';')
-
-        return rw_producao
+        """Load Producao data."""
+        logger.info("Loading Producao data.")
+        return self._load_data(self.URL, self.PATH, self.SEP)
 
     def preprocess(self):
         """Preprocess the data."""
@@ -82,24 +107,20 @@ class ProducaoPreprocessor:
         return rf_producao
 
 
-class ProcessamentoPreprocessor:
+class ProcessamentoPreprocessor(BasePreprocessor):
     """Preprocessor class for the Processamento endpoint."""
 
     def __init__(self):
+        super().__init__()
         self.processing_paths = PROCESSAMENTO_PATHS
 
     def load_data(self, tipo_uva):
-        """Load the data."""
-        try:
-            logger.info("Loading data from URL.")
-            data = pd.read_csv(self.processing_paths[tipo_uva]["url"], sep='\t')
-
-        except Exception as e:
-            logger.warning("Failed to load data from URL. Loading from local file.")
-            logger.warning(e)
-            data = pd.read_csv(self.processing_paths[tipo_uva]["path"], sep='\t')
-
-        return data
+        """Load data for a specific type of grape using predefined paths."""
+        if tipo_uva not in self.processing_paths:
+            raise ValueError(f"No processing path configured for {tipo_uva}")
+        config = self.processing_paths[tipo_uva]
+        logger.info(f"Loading processing data for {tipo_uva}...")
+        return self._load_data(config["url"], config["path"], sep='\t')
 
     def _processa_uvas_processadas(
         self, data: pd.DataFrame, tipo_uva: str, cd_tipo_uva_map: Dict
@@ -154,6 +175,7 @@ class ProcessamentoPreprocessor:
             "br": "Brancas e Rosadas",
         }
         TIPO_UVA = "Viniferas"
+
         data = self.load_data(TIPO_UVA)
 
         rf_data = self._processa_uvas_processadas(data, TIPO_UVA, CD_TIPO_UVA_MAP)
@@ -209,26 +231,21 @@ class ProcessamentoPreprocessor:
         return processamento
 
 
-class ComercializacaoPreprocessor:
+class ComercializacaoPreprocessor(BasePreprocessor):
     """Preprocessor class for the Comercializacao endpoint."""
 
+    URL = 'http://vitibrasil.cnpuv.embrapa.br/download/Comercio.csv'
+    PATH = COMERCIALIZACAO_FILE_PATH
+    SEP = ';'
+
     def __init__(self):
+        super().__init__()
         self.comercializacao = self.load_data()
 
     def load_data(self):
-        """Load the data."""
-        try:
-            logger.info("Loading data from URL.")
-            comercializacao = pd.read_csv(
-                'http://vitibrasil.cnpuv.embrapa.br/download/Comercio.csv', sep=';'
-            )
-
-        except Exception as e:
-            logger.warning("Failed to load data from URL. Loading from local file.")
-            logger.warning(e)
-            comercializacao = pd.read_csv(COMERCIALIZACAO_FILE_PATH, sep=';')
-
-        return comercializacao
+        """Load Comercializacao data."""
+        logger.info("Loading Comercializacao data.")
+        return self._load_data(self.URL, self.PATH, self.SEP)
 
     def preprocess(self):
         """Preprocess the data."""
@@ -282,28 +299,22 @@ class ComercializacaoPreprocessor:
         return rf_comercializacao
 
 
-class ImportacaoPreprocessor:
+class ImportacaoPreprocessor(BasePreprocessor):
     """Preprocessor class for the Importacao endpoint."""
 
     def __init__(self):
         self.importacao_paths = IMPORTACAO_PATHS
 
     def load_data(self, produto_importacao):
-        """Load the data."""
-        try:
-            logger.info(f"Loading data from URL. Product: {produto_importacao}")
-            data = pd.read_csv(
-                self.importacao_paths[produto_importacao]["url"], sep=';'
-            )
+        """Load import data for a specific product."""
+        if produto_importacao not in self.importacao_paths:
+            raise ValueError(f"No processing path configured for {produto_importacao}")
 
-        except Exception as e:
-            logger.warning("Failed to load data from URL. Loading from local file.")
-            logger.warning(e)
-            data = pd.read_csv(
-                self.importacao_paths[produto_importacao]["path"], sep=';'
-            )
-
-        return data
+        logger.info(f"Loading importing data. Product: {produto_importacao}")
+        return self._load_data(
+            self.importacao_paths[produto_importacao]["url"],
+            self.importacao_paths[produto_importacao]["path"],
+            sep=';')
 
     def _processa_importacao(self, data: pd.DataFrame, produto_importacao: str):
         """Trata os dados de uvas processadas para um tipo de uva específico."""
