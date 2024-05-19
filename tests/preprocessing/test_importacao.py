@@ -7,115 +7,85 @@ from embrapa_api.preprocessing.preprocessors import ImportacaoPreprocessor
 
 @pytest.fixture
 def importacao_preprocessor():
-    """Fixture para criar uma instância da classe ImportacaoPreprocessor."""
+    """Fixture for creating an instance of ImportacaoPreprocessor."""
     return ImportacaoPreprocessor()
 
 
 def test_load_data_success(importacao_preprocessor):
-    """
-    Testa se o método load_data carrega os dados com sucesso de uma URL especificada.
-    Verifica se os dados são corretamente carregados e se a função read_csv é chamada
-    com a URL correta.
-    """
+    """Test successful data loading from a specified URL."""
     produto_importacao = "Vinhos"
-    with patch("pandas.read_csv") as mock_read_csv, patch.dict(
-        "embrapa_api.preprocessing.preprocessors.IMPORTACAO_PATHS",
-        {produto_importacao: {"url": "fake_url", "path": "fake_path"}},
-    ):
+    with patch('pandas.read_csv') as mock_read_csv:
         mock_data = pd.DataFrame(
             {
                 "Id": [1, 2],
                 "País": ["Brasil", "França"],
                 "2020.1": [1000, 2000],
-                "2021.1": [1100, 2100],
-                "2020": [500, 600],
-                "2021": [550, 650],
+                "2020": [100, 200],
             }
         )
         mock_read_csv.return_value = mock_data
+        importacao_preprocessor.importacao_paths = {
+            produto_importacao: {"url": "fake_url", "path": "fake_path"}
+        }
 
         result = importacao_preprocessor.load_data(produto_importacao)
 
+        mock_read_csv.assert_called_once_with("fake_url", sep=';')
         assert not result.empty
         assert result.equals(mock_data)
-        mock_read_csv.assert_called_once_with("fake_url", sep=';')
 
 
-def test_processa_importacao(importacao_preprocessor):
-    """
-    Testa o processamento específico dos dados de importação,
-    garantindo que as transformações e o mapeamento estejam corretos.
-    """
+def test_load_data_failure(importacao_preprocessor):
+    """Test that loading data raises a ValueError when no path is configured."""
+    with pytest.raises(ValueError):
+        importacao_preprocessor.load_data("Inexistente")
+
+
+def test_process_import_data(importacao_preprocessor):
+    """Test processing of import data."""
     produto_importacao = "Vinhos"
-    data = pd.DataFrame(
-        {
-            "Id": [1, 2],
-            "País": ["Brasil", "França"],
-            "2020.1": [1000, 2000],
-            "2021.1": [1100, 2100],
-            "2020": [500, 600],
-            "2021": [550, 650],
-        }
+    sample_data = pd.DataFrame(
+        {"Id": [1], "País": ["Brasil"], "2020.1": [1000], "2020": [100]}
     )
-    expected_output = (
-        pd.DataFrame(
+    with patch.object(importacao_preprocessor, 'load_data', return_value=sample_data):
+        result = importacao_preprocessor._processa_importacao(produto_importacao)
+        expected_output = pd.DataFrame(
             {
-                "NM_PAIS": ["Brasil", "Brasil", "França", "França"],
-                "DT_ANO": ["2020", "2021", "2020", "2021"],
-                "NM_ITEM": ["Vinhos", "Vinhos", "Vinhos", "Vinhos"],
-                "QTD_IMPORTADO_KG": [500, 550, 600, 650],
-                "VL_VALOR_IMPORTADO_USD": [1000, 1100, 2000, 2100],
+                "NM_PAIS": ["Brasil"],
+                "DT_ANO": ["2020"],
+                "NM_ITEM": ["Vinhos"],
+                "QTD_IMPORTADO_KG": [100],
+                "VL_VALOR_IMPORTADO_USD": [1000],
             }
         )
-        .sort_values(["NM_PAIS", "DT_ANO"])
-        .reset_index(drop=True)
-    )
 
-    result = importacao_preprocessor._processa_importacao(data, produto_importacao)
-
-    assert result.reset_index(drop=True).equals(expected_output)
+        assert result.reset_index(drop=True).equals(expected_output)
 
 
 def test_preprocess_integration(importacao_preprocessor):
-    """
-    Testa a integração do método preprocess, verificando se a concatenação final
-    dos DataFrames processados de diferentes tipos de importação é feita corretamente.
-    """
+    """Test the integration of the preprocess method."""
+    product_types = importacao_preprocessor.importacao_paths.keys()
+
+    # Create a side_effect list that provides a DataFrame for each product type
+    side_effects = [
+        pd.DataFrame(
+            {
+                "NM_PAIS": [product],
+                "DT_ANO": ["2020"],
+                "NM_ITEM": [product],
+                "QTD_IMPORTADO_KG": [100],
+                "VL_VALOR_IMPORTADO_USD": [1000],
+            }
+        )
+        for product in product_types
+    ]
+
     with patch.object(
-        importacao_preprocessor,
-        'processa_vinhos',
-        return_value=pd.DataFrame(
-            {'NM_PAIS': ['Brasil'], 'DT_ANO': ['2020'], 'NM_ITEM': ['Vinhos']}
-        ),
-    ), patch.object(
-        importacao_preprocessor,
-        'processa_sucos',
-        return_value=pd.DataFrame(
-            {'NM_PAIS': ['França'], 'DT_ANO': ['2020'], 'NM_ITEM': ['Sucos']}
-        ),
-    ), patch.object(
-        importacao_preprocessor,
-        'processa_espumantes',
-        return_value=pd.DataFrame(
-            {'NM_PAIS': ['Itália'], 'DT_ANO': ['2020'], 'NM_ITEM': ['Espumantes']}
-        ),
-    ), patch.object(
-        importacao_preprocessor,
-        'processa_frescas',
-        return_value=pd.DataFrame(
-            {'NM_PAIS': ['Chile'], 'DT_ANO': ['2020'], 'NM_ITEM': ['Frescas']}
-        ),
-    ), patch.object(
-        importacao_preprocessor,
-        'processa_passas',
-        return_value=pd.DataFrame(
-            {'NM_PAIS': ['Argentina'], 'DT_ANO': ['2020'], 'NM_ITEM': ['Passas']}
-        ),
+        importacao_preprocessor, '_processa_importacao', side_effect=side_effects
     ):
         result = importacao_preprocessor.preprocess()
 
-        assert not result.empty
-        assert result.shape == (5, 3)
-        assert set(result["NM_PAIS"].to_list()) == set([
-            "Brasil", "França", "Itália", "Chile", "Argentina"
-        ])
+        # Assert that the number of entries is correct
+        assert len(result) == len(side_effects)
+        # Assert that all product types are represented in the results
+        assert set(result["NM_ITEM"]) == set(product_types)

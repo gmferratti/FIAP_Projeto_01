@@ -9,7 +9,7 @@ from embrapa_api.preprocessing.constants import (
     PROCESSAMENTO_PATHS,
     COMERCIALIZACAO_FILE_PATH,
     IMPORTACAO_PATHS,
-    FILES_DOWNLOAD_DATE
+    FILES_DOWNLOAD_DATE,
 )
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,8 @@ class BasePreprocessor:
                 f"""Failed to load data from URL,
                 Loading from local file. \n
                 Download date: {FILES_DOWNLOAD_DATE}.\n
-                Error: {e}""")
+                Error: {e}"""
+            )
             data = pd.read_csv(path, sep=sep)
         return data
 
@@ -314,11 +315,15 @@ class ImportacaoPreprocessor(BasePreprocessor):
         return self._load_data(
             self.importacao_paths[produto_importacao]["url"],
             self.importacao_paths[produto_importacao]["path"],
-            sep=';')
+            sep=';',
+        )
 
-    def _processa_importacao(self, data: pd.DataFrame, produto_importacao: str):
+    def _processa_importacao(self, produto_importacao: str):
         """Trata os dados de uvas processadas para um tipo de uva específico."""
         logger.info(f"Processing importing data for {produto_importacao}...")
+
+        data = self.load_data(produto_importacao)
+
         keys = ["Id", "País"]
         valor_cols = [col for col in data.columns if '.1' in col]
         qtd_importada_cols = [
@@ -327,25 +332,23 @@ class ImportacaoPreprocessor(BasePreprocessor):
 
         qtd_importadas_df = (
             data[keys + qtd_importada_cols]
-            .melt(id_vars=keys, var_name="ano", value_name="uvas_importadas_kg")
+            .melt(id_vars=keys, var_name="ano", value_name="QTD_IMPORTADO_KG")
             .rename(
                 columns={
                     "Id": "CD_PAIS",
                     "País": "NM_PAIS",
                     "ano": "DT_ANO",
-                    "uvas_importadas_kg": "QTD_IMPORTADO_KG",
                 }
             )
         )
         vr_valor_df = (
             data[keys + valor_cols]
-            .melt(id_vars=keys, var_name="ano", value_name="valor")
+            .melt(id_vars=keys, var_name="ano", value_name="VL_VALOR_IMPORTADO_USD")
             .rename(
                 columns={
                     "Id": "CD_PAIS",
                     "País": "NM_PAIS",
                     "ano": "DT_ANO",
-                    "valor": "VL_VALOR_IMPORTADO_USD",
                 }
             )
             .assign(DT_ANO=lambda x: x["DT_ANO"].str.split(".").str[0])
@@ -368,57 +371,99 @@ class ImportacaoPreprocessor(BasePreprocessor):
 
         return rf_data
 
-    def processa_vinhos(self):
-        PRODUTO_IMPORTACAO = "Vinhos"
-        data = self.load_data(PRODUTO_IMPORTACAO)
+    def preprocess(self):
+        """Preprocess the data."""
+        importacao = pd.concat(
+            [
+                self._processa_importacao(produto_importacao)
+                for produto_importacao in self.importacao_paths.keys()
+            ],
+            ignore_index=True,
+        ).sort_values(by=["NM_PAIS", "DT_ANO"])
 
-        rf_data = self._processa_importacao(data, PRODUTO_IMPORTACAO)
+        return importacao
 
-        return rf_data
 
-    def processa_sucos(self):
-        PRODUTO_IMPORTACAO = "Sucos"
-        data = self.load_data(PRODUTO_IMPORTACAO)
+class ExportacaoPreprocessor(BasePreprocessor):
+    """Preprocessor class for the Exportacao endpoint."""
 
-        rf_data = self._processa_importacao(data, PRODUTO_IMPORTACAO)
+    def __init__(self):
+        super().__init__()
+        self.exportacao_paths = None  # EXPORTACAO_PATHS
 
-        return rf_data
+    def load_data(self, produto_exportacao):
+        """Load export data for a specific product."""
+        if produto_exportacao not in self.exportacao_paths:
+            raise ValueError(f"No processing path configured for {produto_exportacao}")
 
-    # Espumantes, Frescas e Passas
-    def processa_espumantes(self):
-        PRODUTO_IMPORTACAO = "Espumantes"
-        data = self.load_data(PRODUTO_IMPORTACAO)
+        logger.info(f"Loading exporting data. Product: {produto_exportacao}")
+        return self._load_data(
+            self.exportacao_paths[produto_exportacao]["url"],
+            self.exportacao_paths[produto_exportacao]["path"],
+            sep=';',
+        )
 
-        rf_data = self._processa_importacao(data, PRODUTO_IMPORTACAO)
+    def _processa_exportacao(self, produto_importacao: str):
+        """Trata os dados de uvas processadas para um tipo de uva específico."""
+        logger.info(f"Processing exporting data for {produto_importacao}...")
 
-        return rf_data
+        data = self.load_data(produto_importacao)
 
-    def processa_frescas(self):
-        PRODUTO_IMPORTACAO = "Frescas"
-        data = self.load_data(PRODUTO_IMPORTACAO)
+        keys = ["Id", "País"]
+        valor_cols = [col for col in data.columns if '.1' in col]
+        qtd_importada_cols = [
+            col for col in data.columns.difference(keys) if col not in valor_cols
+        ]
 
-        rf_data = self._processa_importacao(data, PRODUTO_IMPORTACAO)
+        qtd_importadas_df = (
+            data[keys + qtd_importada_cols]
+            .melt(id_vars=keys, var_name="ano", value_name="QTD_EXPORTADO_KG")
+            .rename(
+                columns={
+                    "Id": "CD_PAIS",
+                    "País": "NM_PAIS",
+                    "ano": "DT_ANO",
+                }
+            )
+        )
+        vr_valor_df = (
+            data[keys + valor_cols]
+            .melt(id_vars=keys, var_name="ano", value_name="VL_VALOR_EXPORTADO_USD")
+            .rename(
+                columns={
+                    "Id": "CD_PAIS",
+                    "País": "NM_PAIS",
+                    "ano": "DT_ANO",
+                }
+            )
+            .assign(DT_ANO=lambda x: x["DT_ANO"].str.split(".").str[0])
+        )
 
-        return rf_data
-
-    def processa_passas(self):
-        PRODUTO_IMPORTACAO = "Passas"
-        data = self.load_data(PRODUTO_IMPORTACAO)
-
-        rf_data = self._processa_importacao(data, PRODUTO_IMPORTACAO)
+        rf_data = qtd_importadas_df.merge(
+            vr_valor_df, on=["CD_PAIS", "NM_PAIS", "DT_ANO"]
+        ).assign(NM_ITEM=produto_importacao)
+        # removendo CD_PAIS e organizando colunas
+        # Motivo: CD_PAIS nao esta correta para outros datasets
+        rf_data = rf_data[
+            [
+                'NM_PAIS',
+                'DT_ANO',
+                'NM_ITEM',
+                'QTD_EXPORTADO_KG',
+                'VL_VALOR_EXPORTADO_USD',
+            ]
+        ].sort_values(['NM_PAIS', 'DT_ANO'])
 
         return rf_data
 
     def preprocess(self):
         """Preprocess the data."""
-        vinhos = self.processa_vinhos()
-        sucos = self.processa_sucos()
-        espumantes = self.processa_espumantes()
-        frescas = self.processa_frescas()
-        passas = self.processa_passas()
-
-        importacao = pd.concat(
-            [vinhos, sucos, espumantes, frescas, passas], ignore_index=True
+        exportacao = pd.concat(
+            [
+                self._processa_exportacao(produto_exportacao)
+                for produto_exportacao in self.exportacao_paths.keys()
+            ],
+            ignore_index=True,
         ).sort_values(by=["NM_PAIS", "DT_ANO"])
 
-        return importacao
+        return exportacao
