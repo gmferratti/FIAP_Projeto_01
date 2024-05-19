@@ -11,21 +11,26 @@ from app.urls import get_url_for_option, map_urls
 # Fazendo a segurança do nosso ambiente
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # Configurando o logger
 import logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+logging.basicConfig(
+    level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 logging.INFO("Testando o logger.")
 
 app = Flask(__name__)
-#TO_DO: switch para leitura local ou via scraper
-#TO_DO: logger informando a alteração
-#TO_DO: autenticação JWT
+# TO_DO: switch para leitura local ou via scraper
+# TO_DO: logger informando a alteração
+# TO_DO: autenticação JWT
 
 # Essa será a chave para codificar e decodificar o JWT
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'chave_padrao_secreta')
+
 
 def token_required(f):
     @wraps(f)
@@ -44,28 +49,38 @@ def token_required(f):
 
     return decorated
 
+
 @app.route('/unprotected')
 def unprotected():
     return jsonify({'message': 'Anyone can view this!'})
+
 
 @app.route('/protected')
 @token_required
 def protected():
     return jsonify({'message': 'This is only available for people with valid tokens.'})
 
+
 @app.route('/login')
 def login():
     auth = request.authorization
 
     if auth and auth.password == 'password':
-        token = jwt.encode({
-            'user': auth.username,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
-        }, app.config['SECRET_KEY'], algorithm="HS256")
+        token = jwt.encode(
+            {
+                'user': auth.username,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
+            },
+            app.config['SECRET_KEY'],
+            algorithm="HS256",
+        )
 
         return jsonify({'token': token})
 
-    return make_response('Could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
+    return make_response(
+        'Could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'}
+    )
+
 
 @app.route("/")
 def index():
