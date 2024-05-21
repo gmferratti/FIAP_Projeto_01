@@ -54,3 +54,23 @@ IMPORTACAO_PATHS = {
         "path": f'{CSV_FILES_FOLDER}/importacao/ImpPassas.csv',
     },
 }
+
+# Exportacao
+EXPORTACAO_PATHS = {
+    "Vinhos": {
+        "url": 'http://vitibrasil.cnpuv.embrapa.br/download/ExpVinho.csv',
+        "path": f'{CSV_FILES_FOLDER}/exportacao/ExpVinho.csv',
+    },
+    "Sucos": {
+        "url": 'http://vitibrasil.cnpuv.embrapa.br/download/ExpSuco.csv',
+        "path": f'{CSV_FILES_FOLDER}/exportacao/ExpSuco.csv',
+    },
+    "Espumantes": {
+        "url": 'http://vitibrasil.cnpuv.embrapa.br/download/ExpEspumantes.csv',
+        "path": f'{CSV_FILES_FOLDER}/exportacao/ExpEspumantes.csv',
+    },
+    "Frescas": {
+        "url": 'http://vitibrasil.cnpuv.embrapa.br/download/ExpUva.csv',
+        "path": f'{CSV_FILES_FOLDER}/exportacao/ExpUva.csv',
+    },
+}
