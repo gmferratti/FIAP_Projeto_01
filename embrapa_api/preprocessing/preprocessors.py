@@ -1,15 +1,17 @@
 """Preprocessor module for the Embrapa API project."""
 
+import logging
+from typing import Dict
+
 import pandas as pd
 from unidecode import unidecode
-from typing import Dict
-import logging
+
 from embrapa_api.preprocessing.constants import (
-    PRODUCAO_FILE_PATH,
-    PROCESSAMENTO_PATHS,
     COMERCIALIZACAO_FILE_PATH,
-    IMPORTACAO_PATHS,
     FILES_DOWNLOAD_DATE,
+    IMPORTACAO_PATHS,
+    PROCESSAMENTO_PATHS,
+    PRODUCAO_FILE_PATH,
 )
 
 logger = logging.getLogger(__name__)

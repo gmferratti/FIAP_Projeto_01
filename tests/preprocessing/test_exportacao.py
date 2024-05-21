@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import patch
+
 import pandas as pd
+import pytest
 
 from embrapa_api.preprocessing.preprocessors import ExportacaoPreprocessor
 
