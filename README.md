@@ -1,6 +1,6 @@
 # API Embrapa
 
-TODO: Adicionar descrição.
+API para extração dos dados de vitinicultura da Embrapa. Tais dados alimentarão uma base de dados.
 
 ## Configuração Inicial
 
