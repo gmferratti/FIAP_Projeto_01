@@ -1,6 +1,7 @@
 pandas~=2.2
 numpy~=1.26
 Flask~=3.0
+Flask-Caching~=2.3
 beautifulsoup4~=4.12
 requests~=2.31
 unidecode~=1.3

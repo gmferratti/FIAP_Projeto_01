@@ -8,6 +8,7 @@ from unidecode import unidecode
 
 from embrapa_api.preprocessing.constants import (
     COMERCIALIZACAO_FILE_PATH,
+    EXPORTACAO_PATHS,
     FILES_DOWNLOAD_DATE,
     IMPORTACAO_PATHS,
     PROCESSAMENTO_PATHS,
@@ -88,7 +89,7 @@ class ProducaoPreprocessor(BasePreprocessor):
             )
             .astype(
                 {
-                    "ID_PRODUTO": int,
+                    "ID_PRODUTO": str,
                     "NM_PRODUTO": str,
                     "NM_CONTROLE": str,
                     "DT_ANO": str,
@@ -276,7 +277,7 @@ class ComercializacaoPreprocessor(BasePreprocessor):
             )
             .astype(
                 {
-                    "ID_PRODUTO": int,
+                    "ID_PRODUTO": str,
                     "NM_PRODUTO": str,
                     "NM_CONTROLE": str,
                     "DT_ANO": str,
@@ -391,7 +392,7 @@ class ExportacaoPreprocessor(BasePreprocessor):
 
     def __init__(self):
         super().__init__()
-        self.exportacao_paths = None  # EXPORTACAO_PATHS
+        self.exportacao_paths = EXPORTACAO_PATHS
 
     def load_data(self, produto_exportacao):
         """Load export data for a specific product."""
