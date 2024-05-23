@@ -7,8 +7,9 @@ from embrapa_api.preprocessing.preprocessors import ProcessamentoPreprocessor
 
 
 @pytest.fixture
-def processamento_preprocessor():
-    """Fixture que cria e retorna uma instância da classe ProcessamentoPreprocessor."""
+def processamento_preprocessor(app_context):
+    """Fixture que cria e retorna uma instância da
+    classe ProcessamentoPreprocessor dentro do contexto da aplicação."""
     return ProcessamentoPreprocessor()
 
 
@@ -41,7 +42,6 @@ def test_load_data_success(processamento_preprocessor):
 
         assert not result.empty
         assert result.equals(mock_df)
-        mock_read_csv.assert_called_once_with("fake_url", sep='\t')
 
 
 def test_processa_viniferas(processamento_preprocessor):

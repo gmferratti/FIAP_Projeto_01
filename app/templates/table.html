@@ -88,7 +88,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "{{ url_for(endpoint) }}",
+                    "url": "{{ url_for('main.' ~ endpoint) }}",
                     "type": "GET",
                     "data": function(d) {
                         {% if title == "Importação" or title == "Exportação" %}

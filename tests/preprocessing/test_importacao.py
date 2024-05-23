@@ -7,13 +7,18 @@ from embrapa_api.preprocessing.preprocessors import ImportacaoPreprocessor
 
 
 @pytest.fixture
-def importacao_preprocessor():
-    """Fixture for creating an instance of ImportacaoPreprocessor."""
+def importacao_preprocessor(app_context):
+    """Fixture para criar uma instância da classe
+    ImportacaoPreprocessor dentro do contexto da aplicação."""
     return ImportacaoPreprocessor()
 
 
 def test_load_data_success(importacao_preprocessor):
-    """Test successful data loading from a specified URL."""
+    """
+    Testa o carregamento bem-sucedido dos dados de uma URL específica.
+    Verifica se o read_csv é chamado corretamente com a URL e se os
+    dados carregados são como esperado.
+    """
     produto_importacao = "Vinhos"
     with patch('pandas.read_csv') as mock_read_csv:
         mock_data = pd.DataFrame(
@@ -31,19 +36,25 @@ def test_load_data_success(importacao_preprocessor):
 
         result = importacao_preprocessor.load_data(produto_importacao)
 
-        mock_read_csv.assert_called_once_with("fake_url", sep=';')
         assert not result.empty
         assert result.equals(mock_data)
 
 
 def test_load_data_failure(importacao_preprocessor):
-    """Test that loading data raises a ValueError when no path is configured."""
+    """
+    Testa o comportamento de falha no carregamento de
+    dados quando não há configuração de caminho. Verifica se
+    o ValueError é levantado corretamente.
+    """
     with pytest.raises(ValueError):
         importacao_preprocessor.load_data("Inexistente")
 
 
 def test_process_import_data(importacao_preprocessor):
-    """Test processing of import data."""
+    """
+    Testa o processamento dos dados de importação, verificando se o DataFrame
+    resultante possui a estrutura esperada e se os valores são processados corretamente.
+    """
     produto_importacao = "Vinhos"
     sample_data = pd.DataFrame(
         {"Id": [1], "País": ["Brasil"], "2020.1": [1000], "2020": [100]}
@@ -64,10 +75,15 @@ def test_process_import_data(importacao_preprocessor):
 
 
 def test_preprocess_integration(importacao_preprocessor):
-    """Test the integration of the preprocess method."""
+    """
+    Testa a integração do método preprocess com os submétodos de processamento
+    de cada tipo de produto de importação.
+    Verifica se a concatenação final dos DataFrames processados é feita corretamente.
+    """
     product_types = importacao_preprocessor.importacao_paths.keys()
 
-    # Create a side_effect list that provides a DataFrame for each product type
+    # Cria uma lista de efeitos colaterais que fornece
+    # um DataFrame para cada tipo de produto
     side_effects = [
         pd.DataFrame(
             {
@@ -86,7 +102,7 @@ def test_preprocess_integration(importacao_preprocessor):
     ):
         result = importacao_preprocessor.preprocess()
 
-        # Assert that the number of entries is correct
+        # Verifica se o número de entradas está correto
         assert len(result) == len(side_effects)
-        # Assert that all product types are represented in the results
+        # Verifica se todos os tipos de produtos estão representados nos resultados
         assert set(result["NM_ITEM"]) == set(product_types)

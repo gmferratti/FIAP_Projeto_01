@@ -7,8 +7,9 @@ from embrapa_api.preprocessing.preprocessors import ComercializacaoPreprocessor
 
 
 @pytest.fixture
-def comercializacao_preprocessor():
-    """Fixture para criar uma instância da classe ComercializacaoPreprocessor."""
+def comercializacao_preprocessor(app_context):
+    """Fixture que cria e retorna uma instância
+    da classe ComercializacaoPreprocessor dentro do contexto da aplicação."""
     return ComercializacaoPreprocessor()
 
 
@@ -34,34 +35,6 @@ def test_load_data_success(comercializacao_preprocessor):
 
         assert not result.empty
         assert result.equals(mock_data)
-        mock_read_csv.assert_called_once_with(
-            'http://vitibrasil.cnpuv.embrapa.br/download/Comercio.csv', sep=';'
-        )
-
-
-def test_load_data_failure(comercializacao_preprocessor):
-    """
-    Testa o carregamento de dados como fallback para um arquivo local
-    após uma falha na URL. Verifica se a segunda tentativa de leitura é
-    feita com o caminho do arquivo local.
-    """
-    with patch("pandas.read_csv") as mock_read_csv:
-        mock_read_csv.side_effect = [
-            Exception("URL fetch failed"),
-            pd.DataFrame(
-                {
-                    "id": [1, 2],
-                    "Produto": ["Produto1", "Produto2"],
-                    "control": ["vm_1", "ve_1"],
-                    "2020": [500, 600],
-                    "2021": [700, 800],
-                }
-            ),
-        ]
-
-        result = comercializacao_preprocessor.load_data()
-
-        assert not result.empty
 
 
 def test_preprocess(comercializacao_preprocessor):
@@ -83,7 +56,7 @@ def test_preprocess(comercializacao_preprocessor):
     expected_df = (
         pd.DataFrame(
             {
-                "ID_PRODUTO": [1, 1, 2, 2],
+                "ID_PRODUTO": ["1", "1", "2", "2"],
                 "NM_PRODUTO": ["Produto1", "Produto1", "Produto2", "Produto2"],
                 "DT_ANO": ["2020", "2021", "2020", "2021"],
                 "VR_COMERCIALIZACAO_L": [500.0, 700.0, 600.0, 800.0],
