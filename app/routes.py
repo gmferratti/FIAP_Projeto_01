@@ -1,7 +1,5 @@
 import io
-
 from flask import Blueprint, jsonify, render_template, request, send_file
-
 from app import cache
 from embrapa_api.preprocessing.preprocessors import (
     ComercializacaoPreprocessor,
@@ -124,14 +122,14 @@ def download_exportacao():
 
 @bp.route('/producao')
 def producao():
-    """Endpoint para a tabela de Produção."""
+    """Endpoint para visualização da tabela de Produção."""
     preprocessor = ProducaoPreprocessor()
     data = preprocessor.preprocess()
     unique_ids = data['ID_PRODUTO'].unique().tolist()
     return render_template(
         'table.html',
         title="Produção",
-        endpoint="get_producao_data",
+        endpoint="main.get_producao_data",
         unique_ids=unique_ids,
         filter_field="ID_PRODUTO",
     )
@@ -139,14 +137,14 @@ def producao():
 
 @bp.route('/processamento')
 def processamento():
-    """Endpoint para a tabela de Processamento."""
+    """Endpoint para visualização da tabela de Processamento."""
     preprocessor = ProcessamentoPreprocessor()
     data = preprocessor.preprocess()
     unique_ids = data['ID_UVA_PROCESSADA'].unique().tolist()
     return render_template(
         'table.html',
         title="Processamento",
-        endpoint="get_processamento_data",
+        endpoint="main.get_processamento_data",
         unique_ids=unique_ids,
         filter_field="ID_UVA_PROCESSADA",
     )
@@ -154,14 +152,14 @@ def processamento():
 
 @bp.route('/comercializacao')
 def comercializacao():
-    """Endpoint para a tabela de Comercialização."""
+    """Endpoint para visualização da tabela de Comercialização."""
     preprocessor = ComercializacaoPreprocessor()
     data = preprocessor.preprocess()
     unique_ids = data['NM_PRODUTO'].unique().tolist()
     return render_template(
         'table.html',
         title="Comercialização",
-        endpoint="get_comercializacao_data",
+        endpoint="main.get_comercializacao_data",
         unique_ids=unique_ids,
         filter_field="NM_PRODUTO",
     )
@@ -169,7 +167,7 @@ def comercializacao():
 
 @bp.route('/importacao')
 def importacao():
-    """Endpoint para a tabela de Importação."""
+    """Endpoint para visualização da tabela de Importação."""
     preprocessor = ImportacaoPreprocessor()
     data = preprocessor.preprocess()
     unique_items = data['NM_ITEM'].unique().tolist()
@@ -177,7 +175,7 @@ def importacao():
     return render_template(
         'table.html',
         title="Importação",
-        endpoint="get_importacao_data",
+        endpoint="main.get_importacao_data",
         unique_items=unique_items,
         unique_countries=unique_countries,
         filter_field="NM_ITEM",
@@ -186,7 +184,7 @@ def importacao():
 
 @bp.route('/exportacao')
 def exportacao():
-    """Endpoint para a tabela de Exportação."""
+    """Endpoint para visualização da tabela de Exportação."""
     preprocessor = ExportacaoPreprocessor()
     data = preprocessor.preprocess()
     unique_items = data['NM_ITEM'].unique().tolist()
@@ -194,7 +192,7 @@ def exportacao():
     return render_template(
         'table.html',
         title="Exportação",
-        endpoint="get_exportacao_data",
+        endpoint="main.get_exportacao_data",
         unique_items=unique_items,
         unique_countries=unique_countries,
         filter_field="NM_ITEM",
@@ -202,7 +200,7 @@ def exportacao():
 
 
 def apply_pagination(df, start, length):
-    return df.iloc[start : start + length]
+    return df.iloc[start:start + length]
 
 
 def apply_filters(df, filters, filter_fields):
@@ -212,9 +210,46 @@ def apply_filters(df, filters, filter_fields):
     return df
 
 
-@bp.route('/get_producao_data')
 @cache.cached(timeout=3600, key_prefix='producao_data')
+@bp.route('/get_producao_data')
 def get_producao_data():
+    """Obter dados de Produção.
+    ---
+    parameters:
+      - name: start
+        in: query
+        type: integer
+        required: false
+        description: Posição inicial para paginação
+      - name: length
+        in: query
+        type: integer
+        required: false
+        description: Número de registros a serem retornados
+      - name: ID_PRODUTO
+        in: query
+        type: string
+        required: false
+        description: Filtro pelo ID do Produto
+    responses:
+      200:
+        description: Lista de registros de Produção
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              ID_PRODUTO:
+                type: string
+              NM_PRODUTO:
+                type: string
+              DT_ANO:
+                type: string
+              VR_PRODUCAO_L:
+                type: number
+              TIPO_PRODUTO:
+                type: string
+    """
     preprocessor = ProducaoPreprocessor()
     data = preprocessor.preprocess()
     total_records = len(data)
@@ -240,9 +275,48 @@ def get_producao_data():
     )
 
 
-@bp.route('/get_processamento_data')
 @cache.cached(timeout=3600, key_prefix='processamento_data')
+@bp.route('/get_processamento_data')
 def get_processamento_data():
+    """Obter dados de Processamento.
+    ---
+    parameters:
+      - name: start
+        in: query
+        type: integer
+        required: false
+        description: Posição inicial para paginação
+      - name: length
+        in: query
+        type: integer
+        required: false
+        description: Número de registros a serem retornados
+      - name: ID_UVA_PROCESSADA
+        in: query
+        type: string
+        required: false
+        description: Filtro pelo ID da Uva Processada
+    responses:
+      200:
+        description: Lista de registros de Processamento
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              ID_UVA_PROCESSADA:
+                type: string
+              NM_UVA:
+                type: string
+              DT_ANO:
+                type: string
+              QT_UVAS_PROCESSADAS_KG:
+                type: number
+              CD_TIPO_VINHO:
+                type: string
+              CD_TIPO_UVA:
+                type: string
+    """
     preprocessor = ProcessamentoPreprocessor()
     data = preprocessor.preprocess()
     total_records = len(data)
@@ -268,9 +342,46 @@ def get_processamento_data():
     )
 
 
-@bp.route('/get_comercializacao_data')
 @cache.cached(timeout=3600, key_prefix='comercializacao_data')
+@bp.route('/get_comercializacao_data')
 def get_comercializacao_data():
+    """Obter dados de Comercialização.
+    ---
+    parameters:
+      - name: start
+        in: query
+        type: integer
+        required: false
+        description: Posição inicial para paginação
+      - name: length
+        in: query
+        type: integer
+        required: false
+        description: Número de registros a serem retornados
+      - name: NM_PRODUTO
+        in: query
+        type: string
+        required: false
+        description: Filtro pelo Nome do Produto
+    responses:
+      200:
+        description: Lista de registros de Comercialização
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              ID_PRODUTO:
+                type: string
+              NM_PRODUTO:
+                type: string
+              DT_ANO:
+                type: string
+              VR_COMERCIALIZACAO_L:
+                type: number
+              TIPO_PRODUTO:
+                type: string
+    """
     preprocessor = ComercializacaoPreprocessor()
     data = preprocessor.preprocess()
     total_records = len(data)
@@ -296,9 +407,51 @@ def get_comercializacao_data():
     )
 
 
-@bp.route('/get_importacao_data')
 @cache.cached(timeout=3600, key_prefix='importacao_data')
+@bp.route('/get_importacao_data')
 def get_importacao_data():
+    """Obter dados de Importação.
+    ---
+    parameters:
+      - name: start
+        in: query
+        type: integer
+        required: false
+        description: Posição inicial para paginação
+      - name: length
+        in: query
+        type: integer
+        required: false
+        description: Número de registros a serem retornados
+      - name: NM_ITEM
+        in: query
+        type: string
+        required: false
+        description: Filtro pelo Nome do Item
+      - name: NM_PAIS
+        in: query
+        type: string
+        required: false
+        description: Filtro pelo Nome do País
+    responses:
+      200:
+        description: Lista de registros de Importação
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              NM_PAIS:
+                type: string
+              DT_ANO:
+                type: string
+              NM_ITEM:
+                type: string
+              QTD_IMPORTADO_KG:
+                type: number
+              VL_VALOR_IMPORTADO_USD:
+                type: number
+    """
     preprocessor = ImportacaoPreprocessor()
     data = preprocessor.preprocess()
     total_records = len(data)
@@ -324,9 +477,51 @@ def get_importacao_data():
     )
 
 
-@bp.route('/get_exportacao_data')
 @cache.cached(timeout=3600, key_prefix='exportacao_data')
+@bp.route('/get_exportacao_data')
 def get_exportacao_data():
+    """Obter dados de Exportação.
+    ---
+    parameters:
+      - name: start
+        in: query
+        type: integer
+        required: false
+        description: Posição inicial para paginação
+      - name: length
+        in: query
+        type: integer
+        required: false
+        description: Número de registros a serem retornados
+      - name: NM_ITEM
+        in: query
+        type: string
+        required: false
+        description: Filtro pelo Nome do Item
+      - name: NM_PAIS
+        in: query
+        type: string
+        required: false
+        description: Filtro pelo Nome do País
+    responses:
+      200:
+        description: Lista de registros de Exportação
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              NM_PAIS:
+                type: string
+              DT_ANO:
+                type: string
+              NM_ITEM:
+                type: string
+              QTD_EXPORTADO_KG:
+                type: number
+              VL_VALOR_EXPORTADO_USD:
+                type: number
+    """
     preprocessor = ExportacaoPreprocessor()
     data = preprocessor.preprocess()
     total_records = len(data)

@@ -32,4 +32,4 @@ lint-all:
 	isort .
 
 run:
-	python app/main.py
+	python run.py
