@@ -4,10 +4,12 @@ import logging
 from typing import Dict
 
 import pandas as pd
+from flask import current_app
 from unidecode import unidecode
 
 from embrapa_api.preprocessing.constants import (
     COMERCIALIZACAO_FILE_PATH,
+    EXPORTACAO_PATHS,
     FILES_DOWNLOAD_DATE,
     IMPORTACAO_PATHS,
     PROCESSAMENTO_PATHS,
@@ -17,18 +19,16 @@ from embrapa_api.preprocessing.constants import (
 logger = logging.getLogger(__name__)
 
 
-class BasePreprocessor:
-    """Base class for all preprocessors."""
-
-    def __init__(self):
-        pass
-
-    def load_data(self, url, path, sep):
-        """Generalized data loading."""
-        return self._load_data(url, path, sep)
-
-    def _load_data(self, url: str, path: str, sep: str):
-        """Load the data from either a URL or a fallback local file."""
+def _load_data(url: str, path: str, sep: str):
+    """Load the data from either a URL or a fallback local file."""
+    use_local = current_app.config.get('USE_LOCAL_DATA', False)
+    if use_local:
+        logger.info(
+            f"""Loading from local file. \n
+                Download date: {FILES_DOWNLOAD_DATE}."""
+        )
+        data = pd.read_csv(path, sep=sep)
+    else:
         try:
             logger.info("Loading data from URL.")
             data = pd.read_csv(url, sep=sep)
@@ -40,7 +40,18 @@ class BasePreprocessor:
                 Error: {e}"""
             )
             data = pd.read_csv(path, sep=sep)
-        return data
+    return data
+
+
+class BasePreprocessor:
+    """Base class for all preprocessors."""
+
+    def __init__(self):
+        pass
+
+    def load_data(self):
+        """Generalized data loading. Must be overridden by subclasses."""
+        raise NotImplementedError("Subclasses must override this method.")
 
     def preprocess(self):
         """Template method to preprocess data, must be overridden by subclasses."""
@@ -61,7 +72,7 @@ class ProducaoPreprocessor(BasePreprocessor):
     def load_data(self):
         """Load Producao data."""
         logger.info("Loading Producao data.")
-        return self._load_data(self.URL, self.PATH, self.SEP)
+        return _load_data(self.URL, self.PATH, self.SEP)
 
     def preprocess(self):
         """Preprocess the data."""
@@ -88,7 +99,7 @@ class ProducaoPreprocessor(BasePreprocessor):
             )
             .astype(
                 {
-                    "ID_PRODUTO": int,
+                    "ID_PRODUTO": str,
                     "NM_PRODUTO": str,
                     "NM_CONTROLE": str,
                     "DT_ANO": str,
@@ -123,7 +134,7 @@ class ProcessamentoPreprocessor(BasePreprocessor):
             raise ValueError(f"No processing path configured for {tipo_uva}")
         config = self.processing_paths[tipo_uva]
         logger.info(f"Loading processing data for {tipo_uva}...")
-        return self._load_data(config["url"], config["path"], sep='\t')
+        return _load_data(config["url"], config["path"], sep='\t')
 
     def _processa_uvas_processadas(
         self, data: pd.DataFrame, tipo_uva: str, cd_tipo_uva_map: Dict
@@ -248,7 +259,7 @@ class ComercializacaoPreprocessor(BasePreprocessor):
     def load_data(self):
         """Load Comercializacao data."""
         logger.info("Loading Comercializacao data.")
-        return self._load_data(self.URL, self.PATH, self.SEP)
+        return _load_data(self.URL, self.PATH, self.SEP)
 
     def preprocess(self):
         """Preprocess the data."""
@@ -276,7 +287,7 @@ class ComercializacaoPreprocessor(BasePreprocessor):
             )
             .astype(
                 {
-                    "ID_PRODUTO": int,
+                    "ID_PRODUTO": str,
                     "NM_PRODUTO": str,
                     "NM_CONTROLE": str,
                     "DT_ANO": str,
@@ -314,7 +325,7 @@ class ImportacaoPreprocessor(BasePreprocessor):
             raise ValueError(f"No processing path configured for {produto_importacao}")
 
         logger.info(f"Loading importing data. Product: {produto_importacao}")
-        return self._load_data(
+        return _load_data(
             self.importacao_paths[produto_importacao]["url"],
             self.importacao_paths[produto_importacao]["path"],
             sep=';',
@@ -391,7 +402,7 @@ class ExportacaoPreprocessor(BasePreprocessor):
 
     def __init__(self):
         super().__init__()
-        self.exportacao_paths = None  # EXPORTACAO_PATHS
+        self.exportacao_paths = EXPORTACAO_PATHS
 
     def load_data(self, produto_exportacao):
         """Load export data for a specific product."""
@@ -399,7 +410,7 @@ class ExportacaoPreprocessor(BasePreprocessor):
             raise ValueError(f"No processing path configured for {produto_exportacao}")
 
         logger.info(f"Loading exporting data. Product: {produto_exportacao}")
-        return self._load_data(
+        return _load_data(
             self.exportacao_paths[produto_exportacao]["url"],
             self.exportacao_paths[produto_exportacao]["path"],
             sep=';',
