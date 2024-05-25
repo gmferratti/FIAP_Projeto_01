@@ -129,7 +129,7 @@ def producao():
     return render_template(
         'table.html',
         title="Produção",
-        endpoint="main.get_producao_data",
+        endpoint="get_producao_data",
         unique_ids=unique_ids,
         filter_field="ID_PRODUTO",
     )
@@ -144,7 +144,7 @@ def processamento():
     return render_template(
         'table.html',
         title="Processamento",
-        endpoint="main.get_processamento_data",
+        endpoint="get_processamento_data",
         unique_ids=unique_ids,
         filter_field="ID_UVA_PROCESSADA",
     )
@@ -159,7 +159,7 @@ def comercializacao():
     return render_template(
         'table.html',
         title="Comercialização",
-        endpoint="main.get_comercializacao_data",
+        endpoint="get_comercializacao_data",
         unique_ids=unique_ids,
         filter_field="NM_PRODUTO",
     )
@@ -175,7 +175,7 @@ def importacao():
     return render_template(
         'table.html',
         title="Importação",
-        endpoint="main.get_importacao_data",
+        endpoint="get_importacao_data",
         unique_items=unique_items,
         unique_countries=unique_countries,
         filter_field="NM_ITEM",
@@ -192,7 +192,7 @@ def exportacao():
     return render_template(
         'table.html',
         title="Exportação",
-        endpoint="main.get_exportacao_data",
+        endpoint="get_exportacao_data",
         unique_items=unique_items,
         unique_countries=unique_countries,
         filter_field="NM_ITEM",

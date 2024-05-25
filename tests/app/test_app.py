@@ -25,7 +25,7 @@ def client(app):
 def test_index(client):
     rv = client.get('/')
     assert rv.status_code == 200
-    assert "Opções de Navegação" in rv.data.decode('utf-8')
+    assert "Embrapa Wine Data API" in rv.data.decode('utf-8')
 
 
 def test_download_producao(client):
