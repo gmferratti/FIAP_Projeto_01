@@ -9,6 +9,10 @@ API para extração dos dados de vitinicultura da Embrapa. Tais dados alimentar�
 * Luiz Claudio Santana Barbosa
 * Mauricio de Araujo Pintor
 
+## Visão Geral do Projeto
+
+<img width="938" alt="Fluxograma" src="images\Desenho_Fluxograma_Imagem.png">
+
 ## Configuração Inicial
 
 ### Criação do Ambiente Virtual
