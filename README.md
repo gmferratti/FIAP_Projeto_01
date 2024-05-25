@@ -2,6 +2,13 @@
 
 API para extração dos dados de vitinicultura da Embrapa. Tais dados alimentarão uma base de dados.
 
+## Integrantes
+
+* Antonio Eduardo de Oliveira Lima
+* Gustavo Mendonça Ferratti
+* Luiz Claudio Santana Barbosa
+* Mauricio de Araujo Pintor
+
 ## Configuração Inicial
 
 ### Criação do Ambiente Virtual
@@ -31,6 +38,27 @@ Para instalar as dependências de desenvolvimento, incluindo ferramentas necess�
 make install-dev
 ```
 
+## Aplicação
+
+Para rodar a aplicação, execute:
+```bash
+make run
+```
+A aplicação por padrão será disponibilizada na porta 5000. A partir dela será possível:
+ * Visualizar os dados (a partir da interface)
+ * Fazer download do .csv das bases tratadas (a partir da interface)
+ * Fazer a requisição das bases tratadas (por endpoint)
+
+<img width="938" alt="image" src="https://github.com/mauricioarauujo/FIAP_Projeto_01/assets/58861384/90f3bfb2-2770-4959-a9cd-429414d2b1ab">
+
+
+### Endpoints
+
+Para visualizar os endpoints e suas documentações, basta acessar http://localhost:5000/apidocs. Tal documentação foi feita com flasgger (Swagger para o Flask).
+
+<img width="1178" alt="image" src="https://github.com/mauricioarauujo/FIAP_Projeto_01/assets/58861384/69325233-cff5-48f2-b89b-4ebdadf6e840">
+
+
 ## Desenvolvimento
 
 ### Rodando Linters
@@ -51,7 +79,7 @@ Para executar os testes automatizados do projeto, utilize o comando:
 make test
 ```
 
-Obs: O make test utiliza o pytest no background (observar arquivo Makefile), logo, fique a vontada para utilizar esse comando com qualquer argumento de preferência (por exemplo: pytest tests/pastaA/arquivob.py)
+Obs: O make test utiliza o pytest no background (observar arquivo Makefile), logo, fique a vontade para utilizar esse comando com qualquer argumento de preferência (por exemplo: pytest tests/pastaA/arquivob.py)
 
 ### Trabalhando com Notebooks
 Para trabalhar com Jupyter Notebooks na pasta /notebooks, é recomendável que você mantenha seu ambiente virtual ativo para garantir que todas as dependências necessárias estão disponíveis.
